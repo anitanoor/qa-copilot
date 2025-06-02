@@ -1,0 +1,83 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          Role      @default(USER)
+  team          Team?     @relation(fields: [teamId], references: [id])
+  teamId        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  testCases     TestCase[]
+  reviews       Review[]
+}
+
+model Team {
+  id            String    @id @default(cuid())
+  name          String
+  members       User[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  testCases     TestCase[]
+}
+
+model TestCase {
+  id            String    @id @default(cuid())
+  title         String
+  content       String
+  status        TestStatus @default(DRAFT)
+  author        User      @relation(fields: [authorId], references: [id])
+  authorId      String
+  team          Team      @relation(fields: [teamId], references: [id])
+  teamId        String
+  reviews       Review[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Review {
+  id            String    @id @default(cuid())
+  testCase      TestCase  @relation(fields: [testCaseId], references: [id])
+  testCaseId    String
+  reviewer      User      @relation(fields: [reviewerId], references: [id])
+  reviewerId    String
+  structureValidation Json
+  edgeCases     String[]
+  riskScore     Int
+  suggestions   String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Metrics {
+  id            String    @id @default(cuid())
+  teamId        String
+  timeSaved     Float
+  errorsFlagged Int
+  testCasesReviewed Int
+  weekStart     DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  TEAM_LEAD
+  USER
+}
+
+enum TestStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+} 
